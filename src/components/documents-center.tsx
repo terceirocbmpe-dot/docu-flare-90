@@ -109,10 +109,32 @@ async function fetchDocs(): Promise<Doc[]> {
   return Array.isArray(data) ? data : [];
 }
 
+type CategoryKey = "all" | "escalas" | "ferias" | "boletins" | "relatorios" | "diversos";
+
+const CATEGORIES: { key: CategoryKey; label: string; Icon: typeof Files; keywords: string[] }[] = [
+  { key: "all", label: "Todos", Icon: Files, keywords: [] },
+  { key: "escalas", label: "Escalas", Icon: CalendarDays, keywords: ["escala"] },
+  { key: "ferias", label: "Férias", Icon: Plane, keywords: ["feria", "férias", "ferias"] },
+  { key: "boletins", label: "Boletins", Icon: Newspaper, keywords: ["boletim", "boletins"] },
+  { key: "relatorios", label: "Relatórios", Icon: BarChart3, keywords: ["relatorio", "relatório"] },
+  { key: "diversos", label: "Diversos", Icon: FolderOpen, keywords: [] },
+];
+
+function categorize(doc: Doc): CategoryKey {
+  const haystack = `${doc.nome ?? ""} ${doc.tipo ?? ""}`.toLowerCase();
+  for (const cat of CATEGORIES) {
+    if (cat.key === "all" || cat.key === "diversos") continue;
+    if (cat.keywords.some((k) => haystack.includes(k))) return cat.key;
+  }
+  return "diversos";
+}
+
 export function DocumentsCenter() {
-  const { data, isLoading, isError, refetch, isFetching } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
     queryKey: ["documents"],
     queryFn: fetchDocs,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
   });
 
   const [query, setQuery] = useState("");
@@ -120,6 +142,7 @@ export function DocumentsCenter() {
   const [sort, setSort] = useState<"desc" | "asc">("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [pdfDoc, setPdfDoc] = useState<Doc | null>(null);
+  const [category, setCategory] = useState<CategoryKey>("all");
 
   const docs = data ?? [];
 
@@ -129,10 +152,26 @@ export function DocumentsCenter() {
     return Array.from(set);
   }, [docs]);
 
+  const countsByCategory = useMemo(() => {
+    const counts: Record<CategoryKey, number> = {
+      all: docs.length,
+      escalas: 0,
+      ferias: 0,
+      boletins: 0,
+      relatorios: 0,
+      diversos: 0,
+    };
+    docs.forEach((d) => {
+      counts[categorize(d)]++;
+    });
+    return counts;
+  }, [docs]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return docs
       .filter((d) => {
+        if (category !== "all" && categorize(d) !== category) return false;
         if (typeFilter !== "all" && normalizeType(d.tipo) !== typeFilter) return false;
         if (!q) return true;
         return (
@@ -145,7 +184,7 @@ export function DocumentsCenter() {
         const db = new Date(b.atualizado).getTime() || 0;
         return sort === "desc" ? db - da : da - db;
       });
-  }, [docs, query, typeFilter, sort]);
+  }, [docs, query, typeFilter, sort, category]);
 
   function openDoc(doc: Doc) {
     const k = normalizeType(doc.tipo);
