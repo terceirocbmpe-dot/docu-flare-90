@@ -195,22 +195,77 @@ export function DocumentsCenter() {
     }
   }
 
+  const activeCategoryLabel =
+    CATEGORIES.find((c) => c.key === category)?.label ?? "Todos";
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <FileText className="h-5 w-5" />
+    <SidebarProvider>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="border-b border-sidebar-border">
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <FileText className="h-4 w-4" />
             </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Central de Documentos</h1>
-              <p className="text-sm text-muted-foreground">
-                Pesquise, filtre e acesse seus arquivos rapidamente.
-              </p>
+            <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="text-sm font-semibold">Central</span>
+              <span className="text-xs text-muted-foreground">Documentos</span>
             </div>
           </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Categorias</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {CATEGORIES.map((cat) => {
+                  const Icon = cat.Icon;
+                  const count = countsByCategory[cat.key];
+                  const isActive = category === cat.key;
+                  return (
+                    <SidebarMenuItem key={cat.key}>
+                      <SidebarMenuButton
+                        onClick={() => setCategory(cat.key)}
+                        isActive={isActive}
+                        tooltip={cat.label}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span>{cat.label}</span>
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "ml-auto h-5 min-w-[1.5rem] justify-center px-1.5 text-[10px] font-medium tabular-nums group-data-[collapsible=icon]:hidden",
+                            isActive && "bg-primary text-primary-foreground",
+                          )}
+                        >
+                          {count}
+                        </Badge>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+
+      <SidebarInset className="bg-background">
+        <header className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+          <div className="px-6 py-6 md:px-8">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="-ml-1" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+                  {activeCategoryLabel}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Pesquise, filtre e acesse seus arquivos rapidamente.
+                </p>
+              </div>
+            </div>
 
           {/* Toolbar */}
           <div className="mt-8 flex flex-col gap-3 md:flex-row md:items-center">
@@ -265,13 +320,20 @@ export function DocumentsCenter() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="px-6 py-8 md:px-8">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {isLoading
-              ? "Carregando..."
-              : `${filtered.length} ${filtered.length === 1 ? "documento" : "documentos"}`}
-          </p>
+          <div className="flex flex-col">
+            <p className="text-sm text-muted-foreground">
+              {isLoading
+                ? "Carregando..."
+                : `${filtered.length} ${filtered.length === 1 ? "documento" : "documentos"}`}
+            </p>
+            {dataUpdatedAt > 0 && (
+              <p className="text-[11px] text-muted-foreground/70">
+                Atualiza a cada 60s · última {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")}
+              </p>
+            )}
+          </div>
           <Button
             variant="ghost"
             size="sm"
