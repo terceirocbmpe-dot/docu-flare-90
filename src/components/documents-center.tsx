@@ -479,7 +479,8 @@ export function DocumentsCenter() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
