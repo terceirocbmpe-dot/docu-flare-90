@@ -295,13 +295,6 @@ function FolderTree({
 }
 
 export function DocumentsCenter() {
-  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
-    queryKey: ["documents"],
-    queryFn: fetchDocs,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: true,
-  });
-
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<"desc" | "asc">("desc");
@@ -309,6 +302,20 @@ export function DocumentsCenter() {
   const [pdfDoc, setPdfDoc] = useState<Doc | null>(null);
   const [folderPath, setFolderPath] = useState<string>(""); // "" = todos
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+  // Cache policy depends on which folder the user is viewing.
+  // - current month: 60s revalidation
+  // - earlier months of current year: 60min
+  // - previous years: 24h, no auto refetch
+  const policy = useMemo(() => cachePolicyFor(folderPath), [folderPath]);
+
+  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
+    queryKey: ["documents"],
+    queryFn: fetchDocs,
+    staleTime: policy.staleTime,
+    refetchInterval: policy.refetchInterval,
+    refetchIntervalInBackground: true,
+  });
 
   const docs = data ?? [];
 
@@ -343,23 +350,31 @@ export function DocumentsCenter() {
       });
   }, [docs, query, typeFilter, sort, folderPath]);
 
-  function openDoc(doc: Doc) {
+  const openDoc = useCallback((doc: Doc) => {
     const k = normalizeType(doc.tipo);
     if (k === "pdf") {
       setPdfDoc(doc);
     } else {
       window.open(doc.url, "_blank", "noopener,noreferrer");
     }
-  }
+  }, []);
 
-  function toggleFolder(path: string) {
+  const toggleFolder = useCallback((path: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
       if (next.has(path)) next.delete(path);
       else next.add(path);
       return next;
     });
-  }
+  }, []);
+
+  const handleSelectFolder = useCallback((path: string) => {
+    setFolderPath(path);
+  }, []);
+
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpanded((prev) => (prev === id ? null : id));
+  }, []);
 
   const activeLabel = folderPath
     ? folderPath.split("/").pop() ?? "Todos"
@@ -421,7 +436,7 @@ export function DocumentsCenter() {
                   active={folderPath}
                   expanded={openFolders}
                   onToggle={toggleFolder}
-                  onSelect={setFolderPath}
+                  onSelect={handleSelectFolder}
                 />
               </SidebarMenu>
             </SidebarGroupContent>
