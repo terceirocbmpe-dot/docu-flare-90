@@ -518,14 +518,31 @@ export function DocumentsCenter() {
         <main className="px-4 py-6 md:px-8 md:py-8">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <p className="text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 {isLoading
                   ? "Carregando..."
                   : `${filtered.length} ${filtered.length === 1 ? "documento" : "documentos"}`}
+                {!isLoading && isFetching && policy.tier === "current-month" && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] text-primary/80"
+                    title="Atualizando em segundo plano"
+                  >
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    atualizando
+                  </span>
+                )}
               </p>
               {dataUpdatedAt > 0 && (
                 <p className="text-[11px] text-muted-foreground/70">
-                  Atualiza a cada 60s · última {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")}
+                  {policy.tier === "current-month"
+                    ? "Atualiza a cada 1 min"
+                    : policy.tier === "current-year"
+                      ? "Atualiza a cada 60 min"
+                      : policy.tier === "old-year"
+                        ? "Cache de 24 h"
+                        : "Atualiza a cada 1 min"}
+                  {" · última "}
+                  {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")}
                 </p>
               )}
             </div>
