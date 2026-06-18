@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
@@ -106,6 +106,63 @@ async function fetchDocs(): Promise<Doc[]> {
   if (!res.ok) throw new Error("Falha ao carregar documentos");
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+}
+
+// --- Cache tiering -------------------------------------------------------
+
+const MONTH_NAMES_PT = [
+  "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+/** Try to detect {year, month} (1-12) from a folder path or doc fields. */
+function detectYearMonth(path: string): { year?: number; month?: number } {
+  if (!path) return {};
+  const lower = path.toLowerCase();
+  const yearMatch = lower.match(/(20\d{2})/);
+  const year = yearMatch ? Number(yearMatch[1]) : undefined;
+
+  // numeric month: 2025/06, 2025-06, 06/2025
+  const mm = lower.match(/(?:^|[^\d])(0?[1-9]|1[0-2])(?:[^\d]|$)/);
+  let month: number | undefined;
+  for (let i = 0; i < MONTH_NAMES_PT.length; i++) {
+    if (lower.includes(MONTH_NAMES_PT[i])) {
+      const norm = [1,2,3,3,4,5,6,7,8,9,10,11,12][i];
+      month = norm;
+      break;
+    }
+  }
+  if (!month && mm) month = Number(mm[1]);
+  return { year, month };
+}
+
+/**
+ * Resolve cache policy for a selected folder path:
+ *  - current month: refetch every 1min
+ *  - earlier months of current year: refetch every 60min
+ *  - previous years: 24h, no auto refetch
+ *  - unknown / "Todos": default 60s (keeps prior behavior)
+ */
+function cachePolicyFor(path: string): {
+  staleTime: number;
+  refetchInterval: number | false;
+  tier: "current-month" | "current-year" | "old-year" | "default";
+} {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+  const { year, month } = detectYearMonth(path);
+
+  if (year && year < curYear) {
+    return { staleTime: 24 * 60 * 60_000, refetchInterval: false, tier: "old-year" };
+  }
+  if (year === curYear && month && month !== curMonth) {
+    return { staleTime: 60 * 60_000, refetchInterval: 60 * 60_000, tier: "current-year" };
+  }
+  if (year === curYear && month === curMonth) {
+    return { staleTime: 60_000, refetchInterval: 60_000, tier: "current-month" };
+  }
+  return { staleTime: 60_000, refetchInterval: 60_000, tier: "default" };
 }
 
 /** Convert any Google Drive view url to an embeddable preview url. */
@@ -238,13 +295,6 @@ function FolderTree({
 }
 
 export function DocumentsCenter() {
-  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
-    queryKey: ["documents"],
-    queryFn: fetchDocs,
-    refetchInterval: 60_000,
-    refetchIntervalInBackground: true,
-  });
-
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [sort, setSort] = useState<"desc" | "asc">("desc");
@@ -252,6 +302,20 @@ export function DocumentsCenter() {
   const [pdfDoc, setPdfDoc] = useState<Doc | null>(null);
   const [folderPath, setFolderPath] = useState<string>(""); // "" = todos
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+
+  // Cache policy depends on which folder the user is viewing.
+  // - current month: 60s revalidation
+  // - earlier months of current year: 60min
+  // - previous years: 24h, no auto refetch
+  const policy = useMemo(() => cachePolicyFor(folderPath), [folderPath]);
+
+  const { data, isLoading, isError, refetch, isFetching, dataUpdatedAt } = useQuery({
+    queryKey: ["documents"],
+    queryFn: fetchDocs,
+    staleTime: policy.staleTime,
+    refetchInterval: policy.refetchInterval,
+    refetchIntervalInBackground: true,
+  });
 
   const docs = data ?? [];
 
@@ -286,23 +350,31 @@ export function DocumentsCenter() {
       });
   }, [docs, query, typeFilter, sort, folderPath]);
 
-  function openDoc(doc: Doc) {
+  const openDoc = useCallback((doc: Doc) => {
     const k = normalizeType(doc.tipo);
     if (k === "pdf") {
       setPdfDoc(doc);
     } else {
       window.open(doc.url, "_blank", "noopener,noreferrer");
     }
-  }
+  }, []);
 
-  function toggleFolder(path: string) {
+  const toggleFolder = useCallback((path: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
       if (next.has(path)) next.delete(path);
       else next.add(path);
       return next;
     });
-  }
+  }, []);
+
+  const handleSelectFolder = useCallback((path: string) => {
+    setFolderPath(path);
+  }, []);
+
+  const handleToggleExpand = useCallback((id: string) => {
+    setExpanded((prev) => (prev === id ? null : id));
+  }, []);
 
   const activeLabel = folderPath
     ? folderPath.split("/").pop() ?? "Todos"
@@ -364,7 +436,7 @@ export function DocumentsCenter() {
                   active={folderPath}
                   expanded={openFolders}
                   onToggle={toggleFolder}
-                  onSelect={setFolderPath}
+                  onSelect={handleSelectFolder}
                 />
               </SidebarMenu>
             </SidebarGroupContent>
@@ -446,14 +518,31 @@ export function DocumentsCenter() {
         <main className="px-4 py-6 md:px-8 md:py-8">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex flex-col">
-              <p className="text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 {isLoading
                   ? "Carregando..."
                   : `${filtered.length} ${filtered.length === 1 ? "documento" : "documentos"}`}
+                {!isLoading && isFetching && policy.tier === "current-month" && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] text-primary/80"
+                    title="Atualizando em segundo plano"
+                  >
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    atualizando
+                  </span>
+                )}
               </p>
               {dataUpdatedAt > 0 && (
                 <p className="text-[11px] text-muted-foreground/70">
-                  Atualiza a cada 60s · última {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")}
+                  {policy.tier === "current-month"
+                    ? "Atualiza a cada 1 min"
+                    : policy.tier === "current-year"
+                      ? "Atualiza a cada 60 min"
+                      : policy.tier === "old-year"
+                        ? "Cache de 24 h"
+                        : "Atualiza a cada 1 min"}
+                  {" · última "}
+                  {new Date(dataUpdatedAt).toLocaleTimeString("pt-BR")}
                 </p>
               )}
             </div>
@@ -500,76 +589,15 @@ export function DocumentsCenter() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {items.map((doc, i) => {
                       const id = `${groupPath}-${doc.nome}-${i}`;
-                      const isOpen = expanded === id;
-                      const meta = typeMeta(doc.tipo);
-                      const Icon = meta.Icon;
                       return (
-                        <article
+                        <DocCard
                           key={id}
-                          className={cn(
-                            "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
-                            "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
-                          )}
-                        >
-                          <div className="p-5">
-                            <div className="flex items-start gap-3">
-                              <div
-                                className={cn(
-                                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border",
-                                  meta.color,
-                                )}
-                              >
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-                                  {doc.nome}
-                                </h3>
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                  <Badge variant="outline" className={cn("font-normal", meta.color)}>
-                                    {meta.label}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(doc.atualizado)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div
-                              className={cn(
-                                "grid transition-all duration-300 ease-out",
-                                isOpen ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-                              )}
-                            >
-                              <div className="overflow-hidden">
-                                <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs">
-                                  <Row label="Nome" value={doc.nome} />
-                                  <Row label="Tipo" value={doc.tipo} />
-                                  <Row label="Pasta" value={doc.pasta ?? "—"} />
-                                  <Row label="Atualizado" value={formatDate(doc.atualizado)} />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 flex items-center gap-2">
-                              <Button size="sm" onClick={() => openDoc(doc)} className="flex-1">
-                                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                                Abrir
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setExpanded(isOpen ? null : id)}
-                                aria-label="Expandir"
-                              >
-                                <ChevronDown
-                                  className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")}
-                                />
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
+                          id={id}
+                          doc={doc}
+                          isOpen={expanded === id}
+                          onOpen={openDoc}
+                          onToggleExpand={handleToggleExpand}
+                        />
                       );
                     })}
                   </div>
@@ -657,3 +685,87 @@ function SkeletonGrid() {
     </div>
   );
 }
+
+const DocCard = memo(function DocCard({
+  id,
+  doc,
+  isOpen,
+  onOpen,
+  onToggleExpand,
+}: {
+  id: string;
+  doc: Doc;
+  isOpen: boolean;
+  onOpen: (doc: Doc) => void;
+  onToggleExpand: (id: string) => void;
+}) {
+  const meta = typeMeta(doc.tipo);
+  const Icon = meta.Icon;
+  return (
+    <article
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
+        "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
+      )}
+    >
+      <div className="p-5">
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border",
+              meta.color,
+            )}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+              {doc.nome}
+            </h3>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className={cn("font-normal", meta.color)}>
+                {meta.label}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {formatDate(doc.atualizado)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={cn(
+            "grid transition-all duration-300 ease-out",
+            isOpen ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs">
+              <Row label="Nome" value={doc.nome} />
+              <Row label="Tipo" value={doc.tipo} />
+              <Row label="Pasta" value={doc.pasta ?? "—"} />
+              <Row label="Atualizado" value={formatDate(doc.atualizado)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2">
+          <Button size="sm" onClick={() => onOpen(doc)} className="flex-1">
+            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+            Abrir
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleExpand(id)}
+            aria-label="Expandir"
+          >
+            <ChevronDown
+              className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")}
+            />
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+});
