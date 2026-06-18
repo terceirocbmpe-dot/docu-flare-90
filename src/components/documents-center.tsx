@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
@@ -106,6 +106,63 @@ async function fetchDocs(): Promise<Doc[]> {
   if (!res.ok) throw new Error("Falha ao carregar documentos");
   const data = await res.json();
   return Array.isArray(data) ? data : [];
+}
+
+// --- Cache tiering -------------------------------------------------------
+
+const MONTH_NAMES_PT = [
+  "janeiro", "fevereiro", "março", "marco", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+/** Try to detect {year, month} (1-12) from a folder path or doc fields. */
+function detectYearMonth(path: string): { year?: number; month?: number } {
+  if (!path) return {};
+  const lower = path.toLowerCase();
+  const yearMatch = lower.match(/(20\d{2})/);
+  const year = yearMatch ? Number(yearMatch[1]) : undefined;
+
+  // numeric month: 2025/06, 2025-06, 06/2025
+  const mm = lower.match(/(?:^|[^\d])(0?[1-9]|1[0-2])(?:[^\d]|$)/);
+  let month: number | undefined;
+  for (let i = 0; i < MONTH_NAMES_PT.length; i++) {
+    if (lower.includes(MONTH_NAMES_PT[i])) {
+      const norm = [1,2,3,3,4,5,6,7,8,9,10,11,12][i];
+      month = norm;
+      break;
+    }
+  }
+  if (!month && mm) month = Number(mm[1]);
+  return { year, month };
+}
+
+/**
+ * Resolve cache policy for a selected folder path:
+ *  - current month: refetch every 1min
+ *  - earlier months of current year: refetch every 60min
+ *  - previous years: 24h, no auto refetch
+ *  - unknown / "Todos": default 60s (keeps prior behavior)
+ */
+function cachePolicyFor(path: string): {
+  staleTime: number;
+  refetchInterval: number | false;
+  tier: "current-month" | "current-year" | "old-year" | "default";
+} {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+  const { year, month } = detectYearMonth(path);
+
+  if (year && year < curYear) {
+    return { staleTime: 24 * 60 * 60_000, refetchInterval: false, tier: "old-year" };
+  }
+  if (year === curYear && month && month !== curMonth) {
+    return { staleTime: 60 * 60_000, refetchInterval: 60 * 60_000, tier: "current-year" };
+  }
+  if (year === curYear && month === curMonth) {
+    return { staleTime: 60_000, refetchInterval: 60_000, tier: "current-month" };
+  }
+  return { staleTime: 60_000, refetchInterval: 60_000, tier: "default" };
 }
 
 /** Convert any Google Drive view url to an embeddable preview url. */
