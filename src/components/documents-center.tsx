@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
@@ -302,6 +302,9 @@ export function DocumentsCenter() {
   const [pdfDoc, setPdfDoc] = useState<Doc | null>(null);
   const [folderPath, setFolderPath] = useState<string>(""); // "" = todos
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+  const [openYears, setOpenYears] = useState<Set<string>>(new Set());
+  const [openMonths, setOpenMonths] = useState<Set<string>>(new Set());
+  const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
 
   // Cache policy depends on which folder the user is viewing.
   // - current month: 60s revalidation
@@ -376,21 +379,74 @@ export function DocumentsCenter() {
     setExpanded((prev) => (prev === id ? null : id));
   }, []);
 
+  const toggleYear = useCallback((y: string) => {
+    setOpenYears((prev) => {
+      const next = new Set(prev);
+      if (next.has(y)) next.delete(y);
+      else next.add(y);
+      return next;
+    });
+  }, []);
+
+  const toggleMonth = useCallback((key: string) => {
+    setOpenMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  // Simulate lazy "loading" state for newly opened months so the user
+  // sees a skeleton while the cards mount. Documents are only rendered
+  // for months the user has explicitly opened.
+  useEffect(() => {
+    const pending = Array.from(openMonths).filter((k) => !loadedMonths.has(k));
+    if (pending.length === 0) return;
+    const t = setTimeout(() => {
+      setLoadedMonths((prev) => {
+        const next = new Set(prev);
+        pending.forEach((k) => next.add(k));
+        return next;
+      });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [openMonths, loadedMonths]);
+
   const activeLabel = folderPath
     ? folderPath.split("/").pop() ?? "Todos"
     : "Todos os documentos";
 
-  // Group filtered docs by their full folder path for the "Todos" view
-  const grouped = useMemo(() => {
-    const map = new Map<string, Doc[]>();
+  // Group filtered docs by Year > Month derived from `atualizado`.
+  // Used to render a fully collapsed accordion that lazily mounts
+  // document cards only when a month is opened.
+  const yearTree = useMemo(() => {
+    const years = new Map<string, Map<string, Doc[]>>();
     for (const d of filtered) {
-      const key = d.pasta ?? "Sem pasta";
-      const arr = map.get(key) ?? [];
+      const date = new Date(d.atualizado);
+      const valid = !Number.isNaN(date.getTime());
+      const y = valid ? String(date.getFullYear()) : "Sem data";
+      const m = valid ? String(date.getMonth() + 1).padStart(2, "0") : "—";
+      let mMap = years.get(y);
+      if (!mMap) {
+        mMap = new Map();
+        years.set(y, mMap);
+      }
+      const arr = mMap.get(m) ?? [];
       arr.push(d);
-      map.set(key, arr);
+      mMap.set(m, arr);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
-  }, [filtered]);
+    const sortDir = sort === "desc" ? -1 : 1;
+    return Array.from(years.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]) * sortDir)
+      .map(([y, mMap]) => ({
+        year: y,
+        total: Array.from(mMap.values()).reduce((s, a) => s + a.length, 0),
+        months: Array.from(mMap.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]) * sortDir)
+          .map(([m, items]) => ({ month: m, items })),
+      }));
+  }, [filtered, sort]);
 
   return (
     <SidebarProvider>
@@ -576,33 +632,100 @@ export function DocumentsCenter() {
               }
             />
           ) : (
-            <div className="space-y-8">
-              {grouped.map(([groupPath, items]) => (
-                <section key={groupPath}>
-                  <div className="mb-3 flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4 text-primary" />
-                    <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                      {groupPath}
-                    </h2>
-                    <span className="text-xs text-muted-foreground">· {items.length}</span>
+            <div className="space-y-3">
+              {yearTree.map(({ year, total, months }) => {
+                const yOpen = openYears.has(year);
+                return (
+                  <div
+                    key={year}
+                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleYear(year)}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                      aria-expanded={yOpen}
+                    >
+                      <ChevronRight
+                        className={cn(
+                          "h-4 w-4 text-muted-foreground transition-transform",
+                          yOpen && "rotate-90",
+                        )}
+                      />
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold tracking-tight">{year}</span>
+                      <Badge
+                        variant="secondary"
+                        className="ml-auto h-5 min-w-[1.75rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
+                      >
+                        {total}
+                      </Badge>
+                    </button>
+                    {yOpen && (
+                      <div className="space-y-2 border-t border-border bg-background/40 p-3">
+                        {months.map(({ month, items }) => {
+                          const key = `${year}-${month}`;
+                          const mOpen = openMonths.has(key);
+                          const mLoaded = loadedMonths.has(key);
+                          return (
+                            <div
+                              key={key}
+                              className="overflow-hidden rounded-xl border border-border bg-card"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleMonth(key)}
+                                className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/40"
+                                aria-expanded={mOpen}
+                              >
+                                <ChevronRight
+                                  className={cn(
+                                    "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                                    mOpen && "rotate-90",
+                                  )}
+                                />
+                                <FolderOpen className="h-4 w-4 text-primary" />
+                                <span className="text-sm font-medium capitalize">
+                                  {monthLabel(month)}
+                                </span>
+                                <Badge
+                                  variant="outline"
+                                  className="ml-auto h-5 min-w-[1.5rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
+                                >
+                                  {items.length}
+                                </Badge>
+                              </button>
+                              {mOpen && (
+                                <div className="border-t border-border p-4">
+                                  {!mLoaded ? (
+                                    <MonthSkeleton />
+                                  ) : (
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                      {items.map((doc, i) => {
+                                        const id = `${key}-${doc.nome}-${i}`;
+                                        return (
+                                          <DocCard
+                                            key={id}
+                                            id={id}
+                                            doc={doc}
+                                            isOpen={expanded === id}
+                                            onOpen={openDoc}
+                                            onToggleExpand={handleToggleExpand}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {items.map((doc, i) => {
-                      const id = `${groupPath}-${doc.nome}-${i}`;
-                      return (
-                        <DocCard
-                          key={id}
-                          id={id}
-                          doc={doc}
-                          isOpen={expanded === id}
-                          onOpen={openDoc}
-                          onToggleExpand={handleToggleExpand}
-                        />
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
+                );
+              })}
             </div>
           )}
         </main>
@@ -684,6 +807,29 @@ function SkeletonGrid() {
       ))}
     </div>
   );
+}
+
+function MonthSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-[120px] animate-pulse rounded-xl border border-border bg-muted/40"
+        />
+      ))}
+    </div>
+  );
+}
+
+const MONTH_LABELS_PT = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+function monthLabel(mm: string) {
+  const n = Number(mm);
+  if (!n || n < 1 || n > 12) return mm;
+  return MONTH_LABELS_PT[n - 1];
 }
 
 const DocCard = memo(function DocCard({
