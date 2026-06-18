@@ -589,76 +589,15 @@ export function DocumentsCenter() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {items.map((doc, i) => {
                       const id = `${groupPath}-${doc.nome}-${i}`;
-                      const isOpen = expanded === id;
-                      const meta = typeMeta(doc.tipo);
-                      const Icon = meta.Icon;
                       return (
-                        <article
+                        <DocCard
                           key={id}
-                          className={cn(
-                            "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
-                            "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
-                          )}
-                        >
-                          <div className="p-5">
-                            <div className="flex items-start gap-3">
-                              <div
-                                className={cn(
-                                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border",
-                                  meta.color,
-                                )}
-                              >
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground">
-                                  {doc.nome}
-                                </h3>
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                  <Badge variant="outline" className={cn("font-normal", meta.color)}>
-                                    {meta.label}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(doc.atualizado)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div
-                              className={cn(
-                                "grid transition-all duration-300 ease-out",
-                                isOpen ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-                              )}
-                            >
-                              <div className="overflow-hidden">
-                                <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3 text-xs">
-                                  <Row label="Nome" value={doc.nome} />
-                                  <Row label="Tipo" value={doc.tipo} />
-                                  <Row label="Pasta" value={doc.pasta ?? "—"} />
-                                  <Row label="Atualizado" value={formatDate(doc.atualizado)} />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-4 flex items-center gap-2">
-                              <Button size="sm" onClick={() => openDoc(doc)} className="flex-1">
-                                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                                Abrir
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setExpanded(isOpen ? null : id)}
-                                aria-label="Expandir"
-                              >
-                                <ChevronDown
-                                  className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")}
-                                />
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
+                          id={id}
+                          doc={doc}
+                          isOpen={expanded === id}
+                          onOpen={openDoc}
+                          onToggleExpand={handleToggleExpand}
+                        />
                       );
                     })}
                   </div>
