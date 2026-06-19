@@ -824,7 +824,7 @@ function FolderBranchList({
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {children.map((child) => (
         <FolderBranch
           key={child.path}
@@ -872,36 +872,44 @@ const FolderBranch = memo(function FolderBranch({
   const directFiles = docsByFolder.get(node.path) ?? [];
   const hasChildren = childFolders.length > 0;
 
-  // Tamanhos visuais variam com a profundidade (Notion-like).
+  // Sequence id changes each time the node opens, retriggering the
+  // energy pulse animation along its connection rail.
+  const [pulseKey, setPulseKey] = useState(0);
+  const prevOpen = useRef(false);
+  useEffect(() => {
+    if (isOpen && !prevOpen.current) setPulseKey((k) => k + 1);
+    prevOpen.current = isOpen;
+  }, [isOpen]);
+
   const isTop = depth === 0;
 
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-xl border border-border bg-card",
-        isTop && "rounded-2xl shadow-sm",
-      )}
-    >
+    <div className="relative">
+      {/* Folder node card */}
       <button
         type="button"
         onClick={() => onToggle(node.path)}
-        className={cn(
-          "flex w-full items-center gap-3 text-left transition-colors hover:bg-muted/40",
-          isTop ? "px-4 py-3" : "px-4 py-2.5",
-        )}
         aria-expanded={isOpen}
-      >
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform",
-            isOpen && "rotate-90",
-          )}
-        />
-        {isOpen ? (
-          <FolderOpen className="h-4 w-4 text-primary" />
-        ) : (
-          <Folder className="h-4 w-4 text-primary" />
+        className={cn(
+          "group/node relative flex w-full items-center gap-3 overflow-hidden rounded-xl border bg-card text-left transition-all",
+          "hover:-translate-y-px hover:border-primary/40 hover:shadow-[0_0_0_1px_oklch(0.42_0.18_25/0.15),0_8px_24px_-12px_oklch(0.42_0.18_25/0.35)]",
+          isOpen
+            ? "border-primary/50 shadow-[0_0_0_1px_oklch(0.42_0.18_25/0.25),0_10px_30px_-14px_oklch(0.42_0.18_25/0.55)]"
+            : "border-border",
+          isTop ? "px-4 py-3.5" : "px-4 py-2.5",
         )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors",
+            isOpen
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border bg-muted/40 text-muted-foreground group-hover/node:text-primary",
+          )}
+        >
+          {isOpen ? <FolderOpen className="h-3.5 w-3.5" /> : <Folder className="h-3.5 w-3.5" />}
+        </span>
         <span
           className={cn(
             "truncate",
@@ -911,61 +919,91 @@ const FolderBranch = memo(function FolderBranch({
           {node.name}
         </span>
         <Badge
-          variant={isTop ? "secondary" : "outline"}
-          className="ml-auto h-5 min-w-[1.75rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
+          variant="outline"
+          className={cn(
+            "ml-auto h-5 min-w-[1.75rem] justify-center px-1.5 text-[10px] font-medium tabular-nums",
+            isOpen && "border-primary/30 bg-primary/10 text-primary",
+          )}
         >
           {node.total}
         </Badge>
-      </button>
-      {isOpen && (
-        <div
+        <ChevronRight
           className={cn(
-            "border-t border-border",
-            isTop ? "space-y-2 bg-background/40 p-3" : "space-y-2 p-3",
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300",
+            isOpen && "rotate-90 text-primary",
           )}
-        >
+        />
+      </button>
+
+      {/* Branch with red glowing connection rail */}
+      {isOpen && (
+        <div className="relative ml-4 mt-2 pl-6">
+          {/* Vertical rail */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-0 top-0 bottom-2 w-px bg-gradient-to-b from-primary/70 via-primary/40 to-transparent shadow-[0_0_6px_oklch(0.42_0.18_25/0.45)]"
+          />
+          {/* Energy pulse */}
+          <span
+            key={pulseKey}
+            aria-hidden
+            className="animate-energy-flow pointer-events-none absolute left-0 top-0 h-10 w-px -translate-x-px bg-gradient-to-b from-transparent via-primary to-transparent shadow-[0_0_10px_2px_oklch(0.42_0.18_25/0.7)]"
+          />
+
           {!isLoaded ? (
-            <MonthSkeleton />
+            <div className="py-1">
+              <MonthSkeleton />
+            </div>
           ) : (
-            <>
+            <div className="space-y-3">
               {hasChildren &&
                 childFolders.map((child) => (
-                  <FolderBranch
-                    key={child.path}
-                    node={child}
-                    depth={depth + 1}
-                    openNodes={openNodes}
-                    loadedNodes={loadedNodes}
-                    onToggle={onToggle}
-                    docsByFolder={docsByFolder}
-                    expanded={expanded}
-                    onOpen={onOpen}
-                    onToggleExpand={onToggleExpand}
-                  />
+                  <div key={child.path} className="relative">
+                    {/* Horizontal connector to child */}
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute -left-6 top-5 h-px w-6 bg-gradient-to-r from-primary/60 to-primary/10"
+                    />
+                    <FolderBranch
+                      node={child}
+                      depth={depth + 1}
+                      openNodes={openNodes}
+                      loadedNodes={loadedNodes}
+                      onToggle={onToggle}
+                      docsByFolder={docsByFolder}
+                      expanded={expanded}
+                      onOpen={onOpen}
+                      onToggleExpand={onToggleExpand}
+                    />
+                  </div>
                 ))}
               {directFiles.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {directFiles.map((doc, i) => {
-                    const id = `${node.path}::${doc.nome}::${i}`;
-                    return (
-                      <DocCard
-                        key={id}
-                        id={id}
-                        doc={doc}
-                        isOpen={expanded === id}
-                        onOpen={onOpen}
-                        onToggleExpand={onToggleExpand}
-                      />
-                    );
-                  })}
+                <div className="relative">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -left-6 top-8 h-px w-6 bg-gradient-to-r from-primary/60 to-primary/10"
+                  />
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {directFiles.map((doc, i) => {
+                      const id = `${node.path}::${doc.nome}::${i}`;
+                      return (
+                        <DocCard
+                          key={id}
+                          id={id}
+                          doc={doc}
+                          isOpen={expanded === id}
+                          onOpen={onOpen}
+                          onToggleExpand={onToggleExpand}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               {!hasChildren && directFiles.length === 0 && (
-                <p className="px-1 py-2 text-xs text-muted-foreground">
-                  Pasta vazia
-                </p>
+                <p className="px-1 py-2 text-xs text-muted-foreground">Pasta vazia</p>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
