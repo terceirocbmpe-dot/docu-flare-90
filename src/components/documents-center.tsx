@@ -172,6 +172,17 @@ function toPdfEmbedUrl(url: string) {
   return url.replace(/\/view.*$/, "/preview");
 }
 
+function getNodeDepth(path: string) {
+  return path === "" ? 0 : path.split("/").length;
+}
+
+function getNodeParent(path: string) {
+  if (path === "") return "";
+  const idx = path.lastIndexOf("/");
+  return idx === -1 ? "" : path.slice(0, idx);
+}
+
+
 // --- Folder tree ---------------------------------------------------------
 
 type FolderNode = {
@@ -365,8 +376,23 @@ export function DocumentsCenter() {
   const toggleFolder = useCallback((path: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+      if (next.has(path)) {
+        // Fechar o próprio nó e todos os seus descendentes
+        next.delete(path);
+        for (const p of Array.from(next)) {
+          if (p.startsWith(path + "/")) next.delete(p);
+        }
+      } else {
+        // Acordeão: fechar irmãos no mesmo nível antes de abrir
+        const targetDepth = getNodeDepth(path);
+        const targetParent = getNodeParent(path);
+        for (const p of Array.from(next)) {
+          if (getNodeDepth(p) === targetDepth && getNodeParent(p) === targetParent) {
+            next.delete(p);
+          }
+        }
+        next.add(path);
+      }
       return next;
     });
   }, []);
@@ -382,8 +408,23 @@ export function DocumentsCenter() {
   const toggleNode = useCallback((path: string) => {
     setOpenNodes((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+      if (next.has(path)) {
+        // Fechar o próprio nó e todos os seus descendentes
+        next.delete(path);
+        for (const p of Array.from(next)) {
+          if (p.startsWith(path + "/")) next.delete(p);
+        }
+      } else {
+        // Acordeão: manter apenas uma pasta aberta por nível
+        const targetDepth = getNodeDepth(path);
+        const targetParent = getNodeParent(path);
+        for (const p of Array.from(next)) {
+          if (getNodeDepth(p) === targetDepth && getNodeParent(p) === targetParent) {
+            next.delete(p);
+          }
+        }
+        next.add(path);
+      }
       return next;
     });
   }, []);
