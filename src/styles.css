@@ -142,3 +142,42 @@
     color: var(--color-foreground);
   }
 }
+
+@keyframes energy-flow {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes energy-flow-h {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-energy-flow {
+  animation: energy-flow 700ms ease-out forwards;
+}
+
+.animate-energy-flow-h {
+  animation: energy-flow-h 500ms ease-out forwards;
+}
