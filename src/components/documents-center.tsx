@@ -302,9 +302,9 @@ export function DocumentsCenter() {
   const [pdfDoc, setPdfDoc] = useState<Doc | null>(null);
   const [folderPath, setFolderPath] = useState<string>(""); // "" = todos
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
-  const [openYears, setOpenYears] = useState<Set<string>>(new Set());
-  const [openMonths, setOpenMonths] = useState<Set<string>>(new Set());
-  const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
+  // Pastas expandidas na ÁREA PRINCIPAL (chave = caminho completo da pasta).
+  const [openNodes, setOpenNodes] = useState<Set<string>>(new Set());
+  const [loadedNodes, setLoadedNodes] = useState<Set<string>>(new Set());
 
   // Cache policy depends on which folder the user is viewing.
   // - current month: 60s revalidation
@@ -379,74 +379,60 @@ export function DocumentsCenter() {
     setExpanded((prev) => (prev === id ? null : id));
   }, []);
 
-  const toggleYear = useCallback((y: string) => {
-    setOpenYears((prev) => {
+  const toggleNode = useCallback((path: string) => {
+    setOpenNodes((prev) => {
       const next = new Set(prev);
-      if (next.has(y)) next.delete(y);
-      else next.add(y);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   }, []);
 
-  const toggleMonth = useCallback((key: string) => {
-    setOpenMonths((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-
-  // Simulate lazy "loading" state for newly opened months so the user
-  // sees a skeleton while the cards mount. Documents are only rendered
-  // for months the user has explicitly opened.
+  // Lazy "loading" state for newly opened folders — exibe skeleton breve
+  // antes de montar os cards. Arquivos só são renderizados quando a
+  // pasta é explicitamente aberta.
   useEffect(() => {
-    const pending = Array.from(openMonths).filter((k) => !loadedMonths.has(k));
+    const pending = Array.from(openNodes).filter((k) => !loadedNodes.has(k));
     if (pending.length === 0) return;
     const t = setTimeout(() => {
-      setLoadedMonths((prev) => {
+      setLoadedNodes((prev) => {
         const next = new Set(prev);
         pending.forEach((k) => next.add(k));
         return next;
       });
     }, 250);
     return () => clearTimeout(t);
-  }, [openMonths, loadedMonths]);
+  }, [openNodes, loadedNodes]);
 
   const activeLabel = folderPath
     ? folderPath.split("/").pop() ?? "Todos"
     : "Todos os documentos";
 
-  // Group filtered docs by Year > Month derived from `atualizado`.
-  // Used to render a fully collapsed accordion that lazily mounts
-  // document cards only when a month is opened.
-  const yearTree = useMemo(() => {
-    const years = new Map<string, Map<string, Doc[]>>();
+  // Mapa de arquivos por pasta (apenas arquivos diretos, não descendentes)
+  // — espelha a hierarquia da barra lateral na área principal.
+  const docsByFolder = useMemo(() => {
+    const map = new Map<string, Doc[]>();
     for (const d of filtered) {
-      const date = new Date(d.atualizado);
-      const valid = !Number.isNaN(date.getTime());
-      const y = valid ? String(date.getFullYear()) : "Sem data";
-      const m = valid ? String(date.getMonth() + 1).padStart(2, "0") : "—";
-      let mMap = years.get(y);
-      if (!mMap) {
-        mMap = new Map();
-        years.set(y, mMap);
-      }
-      const arr = mMap.get(m) ?? [];
+      const p = d.pasta ?? "";
+      const arr = map.get(p) ?? [];
       arr.push(d);
-      mMap.set(m, arr);
+      map.set(p, arr);
     }
-    const sortDir = sort === "desc" ? -1 : 1;
-    return Array.from(years.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]) * sortDir)
-      .map(([y, mMap]) => ({
-        year: y,
-        total: Array.from(mMap.values()).reduce((s, a) => s + a.length, 0),
-        months: Array.from(mMap.entries())
-          .sort((a, b) => a[0].localeCompare(b[0]) * sortDir)
-          .map(([m, items]) => ({ month: m, items })),
-      }));
-  }, [filtered, sort]);
+    return map;
+  }, [filtered]);
+
+  // Subárvore de pastas a renderizar na área principal: raiz, ou nó
+  // correspondente à pasta selecionada na barra lateral.
+  const rootNode = useMemo(() => {
+    if (!folderPath) return tree;
+    const segs = folderPath.split("/").filter(Boolean);
+    let n: FolderNode | undefined = tree;
+    for (const s of segs) {
+      n = n?.children.get(s);
+      if (!n) break;
+    }
+    return n ?? tree;
+  }, [tree, folderPath]);
 
   return (
     <SidebarProvider>
@@ -633,99 +619,17 @@ export function DocumentsCenter() {
             />
           ) : (
             <div className="space-y-3">
-              {yearTree.map(({ year, total, months }) => {
-                const yOpen = openYears.has(year);
-                return (
-                  <div
-                    key={year}
-                    className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleYear(year)}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-                      aria-expanded={yOpen}
-                    >
-                      <ChevronRight
-                        className={cn(
-                          "h-4 w-4 text-muted-foreground transition-transform",
-                          yOpen && "rotate-90",
-                        )}
-                      />
-                      <Calendar className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold tracking-tight">{year}</span>
-                      <Badge
-                        variant="secondary"
-                        className="ml-auto h-5 min-w-[1.75rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
-                      >
-                        {total}
-                      </Badge>
-                    </button>
-                    {yOpen && (
-                      <div className="space-y-2 border-t border-border bg-background/40 p-3">
-                        {months.map(({ month, items }) => {
-                          const key = `${year}-${month}`;
-                          const mOpen = openMonths.has(key);
-                          const mLoaded = loadedMonths.has(key);
-                          return (
-                            <div
-                              key={key}
-                              className="overflow-hidden rounded-xl border border-border bg-card"
-                            >
-                              <button
-                                type="button"
-                                onClick={() => toggleMonth(key)}
-                                className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/40"
-                                aria-expanded={mOpen}
-                              >
-                                <ChevronRight
-                                  className={cn(
-                                    "h-3.5 w-3.5 text-muted-foreground transition-transform",
-                                    mOpen && "rotate-90",
-                                  )}
-                                />
-                                <FolderOpen className="h-4 w-4 text-primary" />
-                                <span className="text-sm font-medium capitalize">
-                                  {monthLabel(month)}
-                                </span>
-                                <Badge
-                                  variant="outline"
-                                  className="ml-auto h-5 min-w-[1.5rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
-                                >
-                                  {items.length}
-                                </Badge>
-                              </button>
-                              {mOpen && (
-                                <div className="border-t border-border p-4">
-                                  {!mLoaded ? (
-                                    <MonthSkeleton />
-                                  ) : (
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                                      {items.map((doc, i) => {
-                                        const id = `${key}-${doc.nome}-${i}`;
-                                        return (
-                                          <DocCard
-                                            key={id}
-                                            id={id}
-                                            doc={doc}
-                                            isOpen={expanded === id}
-                                            onOpen={openDoc}
-                                            onToggleExpand={handleToggleExpand}
-                                          />
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <FolderBranchList
+                node={rootNode}
+                depth={0}
+                openNodes={openNodes}
+                loadedNodes={loadedNodes}
+                onToggle={toggleNode}
+                docsByFolder={docsByFolder}
+                expanded={expanded}
+                onOpen={openDoc}
+                onToggleExpand={handleToggleExpand}
+              />
             </div>
           )}
         </main>
