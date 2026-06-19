@@ -736,6 +736,202 @@ function monthLabel(mm: string) {
   return MONTH_LABELS_PT[n - 1];
 }
 
+function FolderBranchList({
+  node,
+  depth,
+  openNodes,
+  loadedNodes,
+  onToggle,
+  docsByFolder,
+  expanded,
+  onOpen,
+  onToggleExpand,
+}: {
+  node: FolderNode;
+  depth: number;
+  openNodes: Set<string>;
+  loadedNodes: Set<string>;
+  onToggle: (path: string) => void;
+  docsByFolder: Map<string, Doc[]>;
+  expanded: string | null;
+  onOpen: (doc: Doc) => void;
+  onToggleExpand: (id: string) => void;
+}) {
+  const children = Array.from(node.children.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR"),
+  );
+  if (children.length === 0) {
+    // Pasta-folha selecionada na sidebar: lista direta dos arquivos.
+    const files = docsByFolder.get(node.path) ?? [];
+    if (files.length === 0) return null;
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {files.map((doc, i) => {
+          const id = `${node.path}::${doc.nome}::${i}`;
+          return (
+            <DocCard
+              key={id}
+              id={id}
+              doc={doc}
+              isOpen={expanded === id}
+              onOpen={onOpen}
+              onToggleExpand={onToggleExpand}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {children.map((child) => (
+        <FolderBranch
+          key={child.path}
+          node={child}
+          depth={depth}
+          openNodes={openNodes}
+          loadedNodes={loadedNodes}
+          onToggle={onToggle}
+          docsByFolder={docsByFolder}
+          expanded={expanded}
+          onOpen={onOpen}
+          onToggleExpand={onToggleExpand}
+        />
+      ))}
+    </div>
+  );
+}
+
+const FolderBranch = memo(function FolderBranch({
+  node,
+  depth,
+  openNodes,
+  loadedNodes,
+  onToggle,
+  docsByFolder,
+  expanded,
+  onOpen,
+  onToggleExpand,
+}: {
+  node: FolderNode;
+  depth: number;
+  openNodes: Set<string>;
+  loadedNodes: Set<string>;
+  onToggle: (path: string) => void;
+  docsByFolder: Map<string, Doc[]>;
+  expanded: string | null;
+  onOpen: (doc: Doc) => void;
+  onToggleExpand: (id: string) => void;
+}) {
+  const isOpen = openNodes.has(node.path);
+  const isLoaded = loadedNodes.has(node.path);
+  const childFolders = Array.from(node.children.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR"),
+  );
+  const directFiles = docsByFolder.get(node.path) ?? [];
+  const hasChildren = childFolders.length > 0;
+
+  // Tamanhos visuais variam com a profundidade (Notion-like).
+  const isTop = depth === 0;
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-border bg-card",
+        isTop && "rounded-2xl shadow-sm",
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(node.path)}
+        className={cn(
+          "flex w-full items-center gap-3 text-left transition-colors hover:bg-muted/40",
+          isTop ? "px-4 py-3" : "px-4 py-2.5",
+        )}
+        aria-expanded={isOpen}
+      >
+        <ChevronRight
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            isOpen && "rotate-90",
+          )}
+        />
+        {isOpen ? (
+          <FolderOpen className="h-4 w-4 text-primary" />
+        ) : (
+          <Folder className="h-4 w-4 text-primary" />
+        )}
+        <span
+          className={cn(
+            "truncate",
+            isTop ? "text-sm font-semibold tracking-tight" : "text-sm font-medium",
+          )}
+        >
+          {node.name}
+        </span>
+        <Badge
+          variant={isTop ? "secondary" : "outline"}
+          className="ml-auto h-5 min-w-[1.75rem] justify-center px-1.5 text-[10px] font-medium tabular-nums"
+        >
+          {node.total}
+        </Badge>
+      </button>
+      {isOpen && (
+        <div
+          className={cn(
+            "border-t border-border",
+            isTop ? "space-y-2 bg-background/40 p-3" : "space-y-2 p-3",
+          )}
+        >
+          {!isLoaded ? (
+            <MonthSkeleton />
+          ) : (
+            <>
+              {hasChildren &&
+                childFolders.map((child) => (
+                  <FolderBranch
+                    key={child.path}
+                    node={child}
+                    depth={depth + 1}
+                    openNodes={openNodes}
+                    loadedNodes={loadedNodes}
+                    onToggle={onToggle}
+                    docsByFolder={docsByFolder}
+                    expanded={expanded}
+                    onOpen={onOpen}
+                    onToggleExpand={onToggleExpand}
+                  />
+                ))}
+              {directFiles.length > 0 && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {directFiles.map((doc, i) => {
+                    const id = `${node.path}::${doc.nome}::${i}`;
+                    return (
+                      <DocCard
+                        key={id}
+                        id={id}
+                        doc={doc}
+                        isOpen={expanded === id}
+                        onOpen={onOpen}
+                        onToggleExpand={onToggleExpand}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+              {!hasChildren && directFiles.length === 0 && (
+                <p className="px-1 py-2 text-xs text-muted-foreground">
+                  Pasta vazia
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
 const DocCard = memo(function DocCard({
   id,
   doc,
