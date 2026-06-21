@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
 
 function NotFoundComponent() {
   return (
@@ -77,24 +78,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Drive Doc Hub is a modern document hub that displays and organizes your files from an API." },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Drive Doc Hub is a modern document hub that displays and organizes your files from an API." },
+      { title: "3º Grupamento de Bombeiros — Central de Documentos" },
+      { name: "description", content: "Portal institucional do 3º Grupamento de Bombeiros: controle de férias, central de documentos e informações sobre o grupamento." },
+      { name: "author", content: "3º GB" },
+      { property: "og:title", content: "3º Grupamento de Bombeiros" },
+      { property: "og:description", content: "Honra, Disciplina e Coragem — a serviço da vida." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "3º Grupamento de Bombeiros" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
-      { name: "twitter:description", content: "Drive Doc Hub is a modern document hub that displays and organizes your files from an API." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/56719418-2fd1-43de-84c5-4913f104e2b6/id-preview-549e38d6--386c5dd1-7709-41d2-afc6-16bd86a1fc94.lovable.app-1781707746110.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/56719418-2fd1-43de-84c5-4913f104e2b6/id-preview-549e38d6--386c5dd1-7709-41d2-afc6-16bd86a1fc94.lovable.app-1781707746110.png" },
+      { name: "twitter:title", content: "3º Grupamento de Bombeiros" },
+      { name: "twitter:description", content: "Honra, Disciplina e Coragem — a serviço da vida." },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/png", href: brasao.url },
+      { rel: "apple-touch-icon", href: brasao.url },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
