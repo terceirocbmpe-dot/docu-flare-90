@@ -68,9 +68,9 @@
 
 :root {
   --radius: 0.625rem;
-  --gb-red: oklch(0.46 0.21 27);
-  --gb-gold: oklch(0.78 0.14 85);
-  --gb-navy: oklch(0.22 0.06 260);
+  --gb-red: oklch(0.58 0.22 28);
+  --gb-gold: oklch(0.76 0.15 85);
+  --gb-navy: oklch(0.32 0.08 245);
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.18 0.01 20);
   --card: oklch(1 0 0);
@@ -196,8 +196,8 @@
 }
 
 @keyframes brasao-glow {
-  0%, 100% { filter: drop-shadow(0 0 24px oklch(0.78 0.14 85 / 0.35)); }
-  50% { filter: drop-shadow(0 0 48px oklch(0.78 0.14 85 / 0.55)); }
+  0%, 100% { filter: drop-shadow(0 0 24px oklch(from var(--gb-gold) l c h / 0.35)); }
+  50% { filter: drop-shadow(0 0 48px oklch(from var(--gb-gold) l c h / 0.55)); }
 }
 
 .gb-reveal {

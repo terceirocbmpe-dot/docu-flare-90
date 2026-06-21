@@ -13,7 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import brasao from "@/assets/sobre/brasao-3gb.png";
+import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
 import heroBg from "@/assets/sobre/hero-sertao-chamas.jpg";
 import gViaturas from "@/assets/sobre/galeria-viaturas.jpg";
 import gEquipe from "@/assets/sobre/galeria-equipe.jpg";
