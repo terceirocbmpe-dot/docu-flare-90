@@ -105,7 +105,7 @@ function SobrePage() {
       <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-[oklch(0.14_0.04_260/0.65)] border-b border-white/10">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
           <a href="#topo" className="flex items-center gap-3">
-            <img src={brasao} alt="Brasão 3º GB" width={36} height={36} className="h-9 w-9 object-contain" />
+            <img src={brasao.url} alt="Brasão 3º GB" width={36} height={36} className="h-9 w-9 object-contain" />
             <span style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold tracking-wide">
               3º <span className="text-[var(--gb-gold)]">GB</span>
             </span>
@@ -139,7 +139,7 @@ function SobrePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.14_0.04_260/0.85)] via-[oklch(0.14_0.04_260/0.6)] to-[oklch(0.14_0.04_260)]" />
         <div className="relative z-10 text-center px-6 max-w-4xl">
           <img
-            src={brasao}
+            src={brasao.url}
             alt="Brasão do 3º Grupamento de Bombeiros"
             width={1024}
             height={1024}
@@ -353,7 +353,7 @@ function SobrePage() {
       <footer className="border-t border-white/10 bg-[oklch(0.11_0.03_260)] py-12 px-6">
         <div className="mx-auto max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <img src={brasao} alt="" aria-hidden width={48} height={48} className="h-12 w-12 object-contain" />
+            <img src={brasao.url} alt="" aria-hidden width={48} height={48} className="h-12 w-12 object-contain" />
             <div>
               <p style={{ fontFamily: "var(--font-display)" }} className="text-lg font-semibold">
                 3º Grupamento de Bombeiros
