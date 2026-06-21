@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
 import {
   Search,
   FileText,
