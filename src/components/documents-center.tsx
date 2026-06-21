@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
 import {
   Search,
   FileText,
@@ -480,12 +481,14 @@ export function DocumentsCenter() {
       <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2 px-2 py-1.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <FileText className="h-4 w-4" />
-            </div>
+            <img
+              src={brasao.url}
+              alt="3º GB"
+              className="h-9 w-9 shrink-0 object-contain"
+            />
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
-              <span className="text-sm font-semibold">Central</span>
-              <span className="text-xs text-muted-foreground">Documentos</span>
+              <span className="text-sm font-semibold">3º GB</span>
+              <span className="text-xs text-muted-foreground">Central de Documentos</span>
             </div>
           </div>
         </SidebarHeader>
@@ -532,9 +535,11 @@ export function DocumentsCenter() {
           <div className="px-4 py-5 md:px-8 md:py-6">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="-ml-1" />
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <FileText className="h-5 w-5" />
-              </div>
+              <img
+                src={brasao.url}
+                alt="Brasão 3º GB"
+                className="h-11 w-11 shrink-0 object-contain drop-shadow-sm"
+              />
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-semibold tracking-tight md:text-2xl">
                   {activeLabel}
