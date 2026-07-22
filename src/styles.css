@@ -211,3 +211,45 @@
 .gb-brasao-glow {
   animation: brasao-glow 4s ease-in-out infinite;
 }
+
+
+/* === Visual 3D (leve: só transform/box-shadow, sem custo de carregamento) === */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.06),
+    0 6px 16px -10px rgb(0 0 0 / 0.14);
+}
+@media (hover: hover) {
+  .card-3d:hover {
+    transform: perspective(900px) rotateX(1.6deg) translateY(-4px) scale(1.008);
+    border-color: oklch(0.42 0.18 25 / 0.35);
+    box-shadow:
+      0 2px 4px rgb(0 0 0 / 0.08),
+      0 20px 40px -18px oklch(0.42 0.18 25 / 0.4),
+      0 12px 24px -14px rgb(0 0 0 / 0.24);
+  }
+}
+.card-3d:active {
+  transform: perspective(900px) translateY(-1px) scale(0.996);
+}
+
+.header-3d {
+  position: relative;
+  box-shadow: 0 10px 28px -22px rgb(0 0 0 / 0.4);
+}
+
+.float-3d {
+  animation: float-3d 6s ease-in-out infinite;
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 0.28));
+}
+@keyframes float-3d {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-3d { animation: none; }
+  .card-3d, .card-3d:hover, .card-3d:active { transform: none; }
+}
