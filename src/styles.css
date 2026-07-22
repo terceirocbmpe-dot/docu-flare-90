@@ -71,38 +71,39 @@
   --gb-red: oklch(0.58 0.22 28);
   --gb-gold: oklch(0.76 0.15 85);
   --gb-navy: oklch(0.32 0.08 245);
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.18 0.01 20);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.01 20);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 20);
-  --primary: oklch(0.42 0.18 25);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.01 20);
-  --secondary-foreground: oklch(0.2 0.02 20);
-  --muted: oklch(0.96 0.005 20);
-  --muted-foreground: oklch(0.5 0.02 20);
-  --accent: oklch(0.95 0.03 25);
-  --accent-foreground: oklch(0.35 0.18 25);
-  --destructive: oklch(0.55 0.22 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0.01 20);
-  --input: oklch(0.92 0.01 20);
-  --ring: oklch(0.42 0.18 25);
+  /* Tema Operações — paleta cinematográfica CBMPE */
+  --background: #0A0A0A;
+  --foreground: #F5F5F5;
+  --card: #1A1A1A;
+  --card-foreground: #F5F5F5;
+  --popover: #161616;
+  --popover-foreground: #F5F5F5;
+  --primary: #C1121F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #202020;
+  --secondary-foreground: #E5E5E5;
+  --muted: #1C1C1C;
+  --muted-foreground: #A6A6A6;
+  --accent: #2A1410;
+  --accent-foreground: #FF6A00;
+  --destructive: #E5484D;
+  --destructive-foreground: #FFFFFF;
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: #C1121F;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar: #101012;
+  --sidebar-foreground: #E8E8E8;
+  --sidebar-primary: #C1121F;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1E1E1E;
+  --sidebar-accent-foreground: #F5F5F5;
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: #C1121F;
 }
 
 .dark {
@@ -351,4 +352,47 @@
 @media (prefers-reduced-motion: reduce) {
   .hero-fire::before,
   .fire-embers span { animation: none; }
+}
+
+
+/* === Tema Operações: ambiente cinematográfico ========================== */
+/* Brilho distante de fogo no fundo da página (vinheta de "central de operações") */
+body {
+  background:
+    radial-gradient(55% 38% at 82% -5%, oklch(0.38 0.13 32 / 0.28), transparent 62%),
+    radial-gradient(45% 32% at 4% 104%, oklch(0.33 0.11 42 / 0.2), transparent 58%),
+    var(--background);
+  background-attachment: fixed;
+}
+
+/* Cartões de vidro (glassmorphism) sobre o ambiente escuro */
+.card-3d {
+  background: oklch(0.2 0.008 20 / 0.68);
+  border-color: oklch(1 0 0 / 0.08);
+  animation: card-in 0.45s ease both;
+}
+@media (min-width: 768px) {
+  .card-3d {
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+  }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Botões principais com brilho de fogo */
+button:where(.bg-primary):hover {
+  box-shadow: 0 0 20px oklch(0.55 0.22 30 / 0.5), 0 4px 14px rgb(0 0 0 / 0.4);
+}
+
+/* Barra de rolagem discreta, estilo painel */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-3d { animation: none; }
 }
