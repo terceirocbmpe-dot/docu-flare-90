@@ -102,6 +102,32 @@ function formatDate(d: string) {
   });
 }
 
+// --- Cache local persistente (leitura instantânea) -----------------------
+// Guarda a última lista no navegador: nas próximas visitas a página abre na
+// hora com os dados salvos e atualiza em segundo plano.
+const LOCAL_CACHE_KEY = "docs-cache-v1";
+
+function readLocalCache(): Doc[] | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CACHE_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.docs) ? (parsed.docs as Doc[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeLocalCache(docs: Doc[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify({ docs, at: Date.now() }));
+  } catch {
+    // armazenamento indisponível — segue sem cache
+  }
+}
+
 async function fetchDocs(): Promise<Doc[]> {
   const res = await fetch(API_URL);
   if (!res.ok) throw new Error("Falha ao carregar documentos");
@@ -330,9 +356,15 @@ export function DocumentsCenter() {
     staleTime: policy.staleTime,
     refetchInterval: policy.refetchInterval,
     refetchIntervalInBackground: true,
+    placeholderData: () => readLocalCache(),
   });
 
   const docs = data ?? [];
+
+  // Persiste a lista mais recente para abrir instantâneo na próxima visita.
+  useEffect(() => {
+    if (data && data.length) writeLocalCache(data);
+  }, [data]);
 
   const types = useMemo(() => {
     const set = new Set<string>();
@@ -531,14 +563,14 @@ export function DocumentsCenter() {
       </Sidebar>
 
       <SidebarInset className="bg-background">
-        <header className="border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+        <header className="header-3d border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
           <div className="px-4 py-5 md:px-8 md:py-6">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="-ml-1" />
               <img
                 src={brasao.url}
                 alt="Brasão 3º GB"
-                className="h-11 w-11 shrink-0 object-contain drop-shadow-sm"
+                className="float-3d h-11 w-11 shrink-0 object-contain"
               />
               <div className="min-w-0">
                 <h1 className="truncate text-lg font-semibold tracking-tight md:text-2xl">
@@ -1034,8 +1066,7 @@ const DocCard = memo(function DocCard({
   return (
     <article
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
-        "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
+        "card-3d group relative overflow-hidden rounded-2xl border border-border bg-card",
       )}
     >
       <div className="p-5">
