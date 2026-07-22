@@ -563,21 +563,24 @@ export function DocumentsCenter() {
       </Sidebar>
 
       <SidebarInset className="bg-background">
-        <header className="header-3d border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
-          <div className="px-4 py-5 md:px-8 md:py-6">
+        <header className="hero-fire relative overflow-hidden">
+          <div className="fire-embers pointer-events-none" aria-hidden="true">
+            <span /><span /><span /><span /><span /><span />
+          </div>
+          <div className="relative z-10 px-4 py-5 md:px-8 md:py-6">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="-ml-1" />
+              <SidebarTrigger className="-ml-1 text-white/90 hover:bg-white/10 hover:text-white" />
               <img
                 src={brasao.url}
                 alt="Brasão 3º GB"
-                className="float-3d h-11 w-11 shrink-0 object-contain"
+                className="float-3d brasao-fire h-12 w-12 shrink-0 object-contain"
               />
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-semibold tracking-tight md:text-2xl">
+                <h1 className="title-fire truncate text-lg font-bold tracking-tight md:text-2xl">
                   {activeLabel}
                 </h1>
                 {folderPath && (
-                  <p className="truncate text-xs text-muted-foreground">{folderPath}</p>
+                  <p className="truncate text-xs text-white/60">{folderPath}</p>
                 )}
               </div>
             </div>
@@ -590,7 +593,7 @@ export function DocumentsCenter() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Pesquisar por nome, tipo ou pasta..."
-                  className="h-11 bg-card pl-9 pr-9"
+                  className="h-11 border-transparent bg-card pl-9 pr-9 shadow-lg"
                 />
                 {query && (
                   <button
@@ -605,7 +608,7 @@ export function DocumentsCenter() {
 
               <div className="flex gap-2">
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="h-11 flex-1 bg-card md:w-[150px] md:flex-none">
+                  <SelectTrigger className="h-11 flex-1 border-transparent bg-card shadow-lg md:w-[150px] md:flex-none">
                     <SlidersHorizontal className="mr-2 h-4 w-4 text-muted-foreground" />
                     <SelectValue placeholder="Tipo" />
                   </SelectTrigger>
@@ -620,7 +623,7 @@ export function DocumentsCenter() {
                 </Select>
 
                 <Select value={sort} onValueChange={(v: "asc" | "desc") => setSort(v)}>
-                  <SelectTrigger className="h-11 flex-1 bg-card md:w-[170px] md:flex-none">
+                  <SelectTrigger className="h-11 flex-1 border-transparent bg-card shadow-lg md:w-[170px] md:flex-none">
                     <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                     <SelectValue />
                   </SelectTrigger>
@@ -632,6 +635,7 @@ export function DocumentsCenter() {
               </div>
             </div>
           </div>
+          <div className="fire-stripes relative z-10" aria-hidden="true" />
         </header>
 
         {/* Content */}
