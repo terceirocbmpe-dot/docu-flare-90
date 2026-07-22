@@ -79,13 +79,13 @@ function typeMeta(t: string) {
       return {
         label: "Excel",
         Icon: FileSpreadsheet,
-        color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+        color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
       };
     case "word":
       return {
         label: "Word",
         Icon: FileText,
-        color: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+        color: "bg-blue-500/10 text-blue-400 border-blue-500/20",
       };
     default:
       return { label: t || "Arquivo", Icon: FileIcon, color: "bg-muted text-muted-foreground border-border" };
@@ -562,7 +562,7 @@ export function DocumentsCenter() {
         </SidebarContent>
       </Sidebar>
 
-      <SidebarInset className="bg-background">
+      <SidebarInset className="bg-transparent">
         <header className="hero-fire relative overflow-hidden">
           <div className="fire-embers pointer-events-none" aria-hidden="true">
             <span /><span /><span /><span /><span /><span />
