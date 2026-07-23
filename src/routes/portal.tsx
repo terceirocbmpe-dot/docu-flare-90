@@ -38,9 +38,9 @@ const SECOES: Secao[] = [
     Icone: Flame,
     links: [
       {
-        titulo: "Central de Documentos",
+        titulo: "Escalas de Serviço 2026",
         descricao: "Escalas e documentos do serviço operacional",
-        url: "/",
+        url: "/escalas",
         interno: true,
       },
       ...(URL_PE_SEGURO.startsWith("http")
@@ -59,9 +59,10 @@ const SECOES: Secao[] = [
     Icone: CalendarDays,
     links: [
       {
-        titulo: "Escalas do Serviço Operacional",
-        descricao: "Pasta com as escalas publicadas",
-        url: "https://drive.google.com/drive/folders/1mQ2ex8bXG6lt-E2sE2_mmzSJ9QkhSiYk?usp=sharing",
+        titulo: "Escalas de Serviço 2026",
+        descricao: "Escalas e documentos do serviço operacional",
+        url: "/escalas",
+        interno: true,
       },
       {
         titulo: "DInter/2 — Operações",
@@ -70,6 +71,17 @@ const SECOES: Secao[] = [
       {
         titulo: "Cronograma de Prevenções e Palestras",
         url: "https://docs.google.com/spreadsheets/d/1gL_DSqWklsvbKXaWGhoyn4TW5i5pcsHSLBNpqU21mOc/edit?usp=sharing",
+      },
+    ],
+  },
+  {
+    titulo: "Férias",
+    Icone: CalendarDays,
+    links: [
+      {
+        titulo: "Controle de Férias 2026 e 2027",
+        descricao: "Férias do efetivo por matrícula e mês",
+        url: "https://leave-harmonize.lovable.app",
       },
     ],
   },
@@ -258,9 +270,9 @@ function PortalPage() {
             Honra · Disciplina · Coragem
           </p>
           <div className="mt-4 flex items-center justify-center gap-6 text-xs">
-            <Link to="/" className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary">
+            <Link to="/escalas" className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-primary">
               <ArrowLeft className="h-3.5 w-3.5" />
-              Central de Documentos
+              Escalas de Serviço 2026
             </Link>
             <Link to="/sobre" className="text-muted-foreground transition-colors hover:text-primary">
               Sobre o 3º GB
