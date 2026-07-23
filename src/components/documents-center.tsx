@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
+import heroBg from "@/assets/sobre/hero-sertao-chamas.jpg";
 import {
   Search,
   FileText,
@@ -564,6 +565,11 @@ export function DocumentsCenter() {
 
       <SidebarInset className="bg-transparent">
         <header className="hero-fire relative overflow-hidden">
+          <div
+            className="hero-fire-photo"
+            style={{ backgroundImage: `url(${heroBg})` }}
+            aria-hidden="true"
+          />
           <div className="fire-embers pointer-events-none" aria-hidden="true">
             <span /><span /><span /><span /><span /><span />
           </div>
