@@ -16,7 +16,7 @@ const SECOES: Secao[] = [
     titulo: "Sistemas do 3º GB",
     Icone: Flame,
     links: [
-      { titulo: "Escalas de Serviço 2026", descricao: "Escalas e documentos do serviço operacional", url: "/portal", interno: true },
+      { titulo: "🔥 Escalas com Visual Moderno — 3º GB", descricao: "Veja as escalas de forma organizada e interativa", url: "/portal", interno: true },
       ...(URL_PE_SEGURO.startsWith("http") ? [{ titulo: "Voluntariado PE Seguro", descricao: "Inscrição mensal de voluntários", url: URL_PE_SEGURO }] : []),
     ],
   },
@@ -31,7 +31,8 @@ const SECOES: Secao[] = [
     titulo: "Escala Operacional",
     Icone: CalendarDays,
     links: [
-      { titulo: "Escalas de Serviço 2026", descricao: "Escalas e documentos do serviço operacional", url: "/portal", interno: true },
+      { titulo: "🔥 Escalas com Visual Moderno — 3º GB", descricao: "Veja as escalas de forma organizada e interativa", url: "/portal", interno: true },
+      { titulo: "Escalas no Google Drive", descricao: "Pasta original das escalas publicadas", url: "https://drive.google.com/drive/folders/1mQ2ex8bXG6lt-E2sE2_mmzSJ9QkhSiYk" },
       { titulo: "DInter/2 — Operações", url: "https://linktr.ee/dinter2cbmpe" },
       { titulo: "Cronograma de Prevenções e Palestras", url: "https://docs.google.com/spreadsheets/d/1gL_DSqWklsvbKXaWGhoyn4TW5i5pcsHSLBNpqU21mOc/edit?usp=sharing" },
     ],
