@@ -396,3 +396,4 @@ button:where(.bg-primary):hover {
 @media (prefers-reduced-motion: reduce) {
   .card-3d { animation: none; }
 }
+/* sync 22/07/2026 */
