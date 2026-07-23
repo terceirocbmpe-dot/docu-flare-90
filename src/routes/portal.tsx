@@ -165,7 +165,7 @@ const SECOES: Secao[] = [
 ];
 // ====================================================
 
-export const Route = createFileRoute("/portal")({
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Portal Operacional — 3º GB" },

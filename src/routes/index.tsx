@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { DocumentsCenter } from "@/components/documents-center";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/escalas")({
   head: () => ({
     meta: [
       { title: "Escalas de Serviço 2026 — 3º GB" },
