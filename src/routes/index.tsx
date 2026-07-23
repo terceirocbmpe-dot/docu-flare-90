@@ -18,12 +18,20 @@ function IndexPage() {
   return (
     <>
       <DocumentsCenter />
-      <Link
-        to="/sobre"
-        className="fixed bottom-3 right-4 z-40 text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:text-primary transition-colors"
-      >
-        Sobre o 3º GB
-      </Link>
+      <div className="fixed bottom-3 right-4 z-40 flex items-center gap-4">
+        <Link
+          to="/portal"
+          className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:text-primary transition-colors"
+        >
+          Portal Operacional
+        </Link>
+        <Link
+          to="/sobre"
+          className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70 hover:text-primary transition-colors"
+        >
+          Sobre o 3º GB
+        </Link>
+      </div>
     </>
   );
 }
