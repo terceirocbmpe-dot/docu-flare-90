@@ -11,6 +11,10 @@ import {
   Waves,
   HeartPulse,
   ShieldCheck,
+  Building2,
+  CalendarDays,
+  Siren,
+  TreePine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import brasao from "@/assets/sobre/brasao-3gb.png.asset.json";
@@ -76,11 +80,19 @@ const valores = [
 ];
 
 const servicos = [
-  { icon: Flame, title: "Combate a Incêndio", text: "Resposta rápida a incêndios urbanos, florestais e industriais com equipamentos especializados." },
-  { icon: LifeBuoy, title: "Resgate", text: "Operações de resgate em altura, espaços confinados e acidentes de trânsito." },
-  { icon: Waves, title: "Salvamento Aquático", text: "Equipes treinadas para salvamento em rios, açudes e ambientes alagados." },
-  { icon: ShieldCheck, title: "Prevenção", text: "Vistorias, análise de projetos e educação pública em segurança contra incêndio." },
-  { icon: HeartPulse, title: "Atendimento Pré-Hospitalar", text: "Suporte básico e avançado de vida em ocorrências emergenciais." },
+  { icon: Flame, title: "Combate a Incêndio", text: "Resposta rápida a incêndios urbanos e controle de incêndios florestais, comuns na vegetação de Caatinga durante períodos de estiagem." },
+  { icon: LifeBuoy, title: "Busca e Salvamento", text: "Resgates veiculares em rodovias como a BR-232, salvamento em altura, busca em estruturas colapsadas e resgate aquático." },
+  { icon: Waves, title: "Salvamento Aquático", text: "Equipes treinadas para salvamento em rios, açudes e ambientes alagados típicos do sertão pernambucano." },
+  { icon: ShieldCheck, title: "Atividades Técnicas (CAT)", text: "Vistoria de segurança contra incêndio e pânico, emissão de alvarás e fiscalização de edificações comerciais na região." },
+  { icon: HeartPulse, title: "Atendimento Pré-Hospitalar", text: "Primeiros socorros e estabilização de vítimas em acidentes antes do transporte médico." },
+  { icon: TreePine, title: "Defesa Civil", text: "Ações de prevenção e resposta a desastres naturais, apoio às comunidades vulneráveis do Sertão do Pajeú." },
+];
+
+const subunidades = [
+  { numero: "1ª SB", nome: "Sede Principal", cidade: "Serra Talhada", info: "Quartel moderno inaugurado em fevereiro de 2021. O antigo prédio histórico abriga o Centro de Atividades Técnicas (CAT)." },
+  { numero: "2ª SB", nome: "Subgrupamento", cidade: "Afogados da Ingazeira", info: "Cobertura do Vale do Pajeú e municípios da região." },
+  { numero: "3ª SB", nome: "Subgrupamento", cidade: "São José do Egito", info: "Atendimento ao Alto Pajeú e cidades vizinhas." },
+  { numero: "4ª SB", nome: "Subgrupamento", cidade: "Petrolândia", info: "Cobertura do Submédio São Francisco e região de Itaparica." },
 ];
 
 const galeria = [
@@ -112,6 +124,7 @@ function SobrePage() {
           </a>
           <nav className="hidden md:flex items-center gap-7 text-sm text-white/80">
             <a href="#historia" className="hover:text-[var(--gb-gold)] transition-colors">História</a>
+            <a href="#atuacao" className="hover:text-[var(--gb-gold)] transition-colors">Atuação</a>
             <a href="#missao" className="hover:text-[var(--gb-gold)] transition-colors">Missão</a>
             <a href="#servicos" className="hover:text-[var(--gb-gold)] transition-colors">Serviços</a>
             <a href="#galeria" className="hover:text-[var(--gb-gold)] transition-colors">Galeria</a>
@@ -179,13 +192,26 @@ function SobrePage() {
             </h2>
             <div className="mt-6 space-y-4 text-white/80 leading-relaxed">
               <p>
-                O 3º Grupamento de Bombeiros nasceu da necessidade de levar proteção e prontidão às comunidades
-                do interior, enfrentando os desafios singulares do sertão nordestino.
+                O 3º Grupamento de Bombeiros é a unidade operacional do CBMPE responsável pela coordenação de
+                salvamentos, combate a incêndios e ações de Defesa Civil no Sertão do Pajeú e regiões vizinhas.
+                Com sede estratégica em Serra Talhada, é peça fundamental na descentralização da segurança pública
+                no interior de Pernambuco.
               </p>
               <p>
-                Ao longo dos anos, formamos gerações de profissionais dedicados ao serviço público, sempre
-                fiéis à tradição e prontos para responder a qualquer emergência, dia ou noite.
+                Criado para expandir a atuação da Diretoria Integrada do Interior (DII), o 3º GB garante
+                agilidade no tempo de resposta para ocorrências no Sertão pernambucano, reduzindo a dependência
+                da capital e da região metropolitana.
               </p>
+              <div className="mt-4 space-y-2">
+                <div className="flex items-start gap-3">
+                  <CalendarDays className="h-4 w-4 text-[var(--gb-gold)] mt-1 shrink-0" />
+                  <p className="text-sm"><span className="text-white font-semibold">Fundação:</span> 30 de junho de 2004.</p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Building2 className="h-4 w-4 text-[var(--gb-gold)] mt-1 shrink-0" />
+                  <p className="text-sm"><span className="text-white font-semibold">Novo Quartel:</span> Inaugurado em fevereiro de 2021, moderno e adaptado para operações de alta complexidade. O prédio histórico permanece ativo como Centro de Atividades Técnicas (CAT).</p>
+                </div>
+              </div>
             </div>
           </div>
           <div className="gb-reveal relative">
@@ -224,6 +250,37 @@ function SobrePage() {
                   {v.title}
                 </h3>
                 <p className="mt-3 text-white/75 leading-relaxed">{v.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Área de Atuação */}
+      <section id="atuacao" className="py-24 px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center max-w-2xl mx-auto gb-reveal">
+            <span className="text-[var(--gb-gold)] uppercase tracking-[0.25em] text-xs">Estrutura</span>
+            <h2 style={{ fontFamily: "var(--font-display)" }} className="mt-3 text-4xl md:text-5xl font-bold">
+              Área de Atuação
+            </h2>
+            <p className="mt-4 text-white/70">
+              O 3º GB atua de forma capilarizada por meio de quatro subunidades que cobrem dezenas de municípios
+              do Sertão pernambucano.
+            </p>
+          </div>
+          <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {subunidades.map((s) => (
+              <div
+                key={s.numero}
+                className="gb-reveal rounded-2xl p-6 bg-gradient-to-br from-[oklch(0.18_0.05_260)] to-[oklch(0.14_0.04_260)] border border-white/10 hover:border-[var(--gb-gold)]/60 transition-all duration-300"
+              >
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[var(--gb-red)] text-white text-xs font-bold shadow-lg shadow-[var(--gb-red)]/40">
+                  {s.numero.split("ª")[0]}ª
+                </div>
+                <p className="mt-4 text-[var(--gb-gold)] text-xs font-semibold uppercase tracking-wider">{s.numero} — {s.nome}</p>
+                <h3 style={{ fontFamily: "var(--font-display)" }} className="mt-1 text-xl font-bold">{s.cidade}</h3>
+                <p className="mt-2 text-white/65 text-sm leading-relaxed">{s.info}</p>
               </div>
             ))}
           </div>
@@ -300,7 +357,7 @@ function SobrePage() {
             <ul className="mt-8 space-y-4 text-white/85">
               <li className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-[var(--gb-gold)] mt-0.5" />
-                <span>Quartel do 3º Grupamento de Bombeiros — Sertão</span>
+                <span>Quartel do 3º GB — Serra Talhada, Sertão do Pajeú – PE</span>
               </li>
               <li className="flex items-start gap-3">
                 <Phone className="h-5 w-5 text-[var(--gb-gold)] mt-0.5" />
@@ -308,7 +365,7 @@ function SobrePage() {
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="h-5 w-5 text-[var(--gb-gold)] mt-0.5" />
-                <a href="mailto:contato@3gb.local" className="hover:text-[var(--gb-gold)]">contato@3gb.local</a>
+                <a href="mailto:3gb@cbmpe.pe.gov.br" className="hover:text-[var(--gb-gold)]">3gb@cbmpe.pe.gov.br</a>
               </li>
             </ul>
           </div>
