@@ -130,12 +130,12 @@ function SobrePage() {
             <a href="#galeria" className="hover:text-[var(--gb-gold)] transition-colors">Galeria</a>
             <a href="#contato" className="hover:text-[var(--gb-gold)] transition-colors">Contato</a>
           </nav>
-          <Link to="/portal">
+          <Link to="/">
             <Button
               size="sm"
               className="bg-[var(--gb-red)] hover:bg-[var(--gb-red)]/90 text-white border border-[var(--gb-gold)]/40"
             >
-              Controle de Férias
+              Portal Operacional
             </Button>
           </Link>
         </div>
@@ -419,7 +419,7 @@ function SobrePage() {
             </div>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/60">
-            <Link to="/portal" className="hover:text-[var(--gb-gold)]">Portal Operacional</Link>
+            <Link to="/" className="hover:text-[var(--gb-gold)]">Portal Operacional</Link>
             <span>© {new Date().getFullYear()} 3º GB</span>
           </div>
         </div>
